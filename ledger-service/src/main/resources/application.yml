@@ -1,0 +1,23 @@
+server:
+  port: 8083
+
+app:
+  response-delay: 0ms
+
+spring:
+  application:
+    name: ledger-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ledger_db
+    username: draftlab
+    password: draftlab
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yml
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html

@@ -1,0 +1,56 @@
+server:
+  port: 8082
+
+app:
+  ledger-url: http://localhost:8083
+
+spring:
+  application:
+    name: payment-service
+  cloud:
+    openfeign:
+      client:
+        config:
+          ledger-service:
+            connectTimeout: 500
+            readTimeout: 1000
+  datasource:
+    url: jdbc:postgresql://localhost:5432/payments_db
+    username: draftlab
+    password: draftlab
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yml
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      ledger:
+        sliding-window-size: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 2
+  retry:
+    instances:
+      ledger:
+        max-attempts: 3
+        wait-duration: 300ms
+        retry-exceptions:
+          - feign.FeignException
+          - feign.RetryableException
+          - java.net.SocketTimeoutException
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
