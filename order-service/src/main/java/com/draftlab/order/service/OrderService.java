@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -31,6 +32,7 @@ public class OrderService {
         return order;
     }
 
+    @Cacheable(cacheNames = "orders", key = "#id")
     public OrderEntity get(UUID id) {
         return orderRepository.findById(id).orElseThrow();
     }

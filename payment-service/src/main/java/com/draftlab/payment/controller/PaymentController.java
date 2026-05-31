@@ -1,7 +1,7 @@
 package com.draftlab.payment.controller;
 
 import com.draftlab.payment.domain.PaymentEntity;
-import com.draftlab.payment.repository.PaymentRepository;
+import com.draftlab.payment.service.PaymentQueryService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,10 +13,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/payments")
 @RequiredArgsConstructor
 public class PaymentController {
-    private final PaymentRepository paymentRepository;
+    private final PaymentQueryService paymentQueryService;
 
     @GetMapping("/by-order/{orderId}")
     public PaymentEntity byOrder(@PathVariable UUID orderId) {
-        return paymentRepository.findByOrderId(orderId).orElseThrow();
+        return paymentQueryService.findByOrderId(orderId);
     }
 }

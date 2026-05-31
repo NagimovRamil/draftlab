@@ -9,7 +9,9 @@ import com.draftlab.order.repository.OrderRepository;
 import com.draftlab.order.repository.ProcessedMessageRepository;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.CacheManager;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -19,6 +21,7 @@ public class PaymentEventsListener {
     private static final String CONSUMER = "order-service-payment-events";
     private final OrderRepository orderRepository;
     private final ProcessedMessageRepository processedMessages;
+    private final CacheManager cacheManager;
 
     @KafkaListener(topics = Topics.PAYMENT_AUTHORIZED, groupId = "order-service")
     @Transactional
@@ -30,6 +33,7 @@ public class PaymentEventsListener {
         order.setStatus(OrderStatus.PAYMENT_AUTHORIZED);
         order.setUpdatedAt(Instant.now());
         processedMessages.save(new ProcessedMessage(event.eventId(), CONSUMER));
+        evictOrder(event.orderId());
     }
 
     @KafkaListener(topics = Topics.PAYMENT_FAILED, groupId = "order-service")
@@ -42,5 +46,13 @@ public class PaymentEventsListener {
         order.setStatus(OrderStatus.PAYMENT_FAILED);
         order.setUpdatedAt(Instant.now());
         processedMessages.save(new ProcessedMessage(event.eventId(), CONSUMER));
+        evictOrder(event.orderId());
+    }
+
+    private void evictOrder(UUID orderId) {
+        var cache = cacheManager.getCache("orders");
+        if (cache != null) {
+            cache.evict(orderId);
+        }
     }
 }
