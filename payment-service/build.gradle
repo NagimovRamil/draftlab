@@ -13,11 +13,14 @@ dependencyManagement {
 dependencies {
     implementation project(':common-events')
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.kafka:spring-kafka'
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
     implementation 'io.github.resilience4j:resilience4j-spring-boot3'
+    implementation 'io.github.resilience4j:resilience4j-bulkhead'
     implementation 'io.github.resilience4j:resilience4j-retry'
+    implementation 'com.github.ben-manes.caffeine:caffeine'
     implementation 'org.liquibase:liquibase-core'
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${rootProject.ext.springdocVersion}"
     compileOnly 'org.projectlombok:lombok'

@@ -32,6 +32,10 @@ spring:
     consumer:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+  cache:
+    cache-names: payments-by-order
+    caffeine:
+      spec: maximumSize=1000,expireAfterWrite=5m
 
 resilience4j:
   circuitbreaker:
@@ -50,6 +54,11 @@ resilience4j:
           - feign.FeignException
           - feign.RetryableException
           - java.net.SocketTimeoutException
+  bulkhead:
+    instances:
+      ledger:
+        max-concurrent-calls: 10
+        max-wait-duration: 100ms
 
 springdoc:
   swagger-ui:

@@ -22,6 +22,10 @@ spring:
     consumer:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+  cache:
+    cache-names: orders
+    caffeine:
+      spec: maximumSize=1000,expireAfterWrite=5m
 
 springdoc:
   swagger-ui:

@@ -16,7 +16,9 @@
 - Idempotent Consumer: `processed_messages` защищает consumers от повторной доставки.
 - At-least-once delivery: Kafka + идемпотентная обработка.
 - Circuit Breaker и Retry: `payment-service -> ledger-service` через Resilience4j.
+- Bulkhead: `payment-service -> ledger-service` ограничивает число параллельных вызовов ledger через Resilience4j.
 - Graceful degradation: при недоступном ledger платеж переходит в `FAILED`, система публикует событие отказа.
+- Cache-aside/read-through cache: GET-запросы заказов и платежей кэшируются через Spring Cache + Caffeine.
 - Request/reply: HTTP/Feign вызов ledger.
 - Publish/subscribe: Kafka topics между сервисами.
 
