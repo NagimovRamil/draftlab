@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -26,15 +26,15 @@ public class OrderService {
     @Transactional
     public OrderEntity create(String customerId, BigDecimal amount, String currency) {
         var order = orderRepository.save(OrderEntity.create(customerId, amount, currency));
-        var event = new OrderCreatedEvent(UUID.randomUUID(), order.getId(), customerId, amount, currency, Instant.now());
+        var correlationId = MDC.get("correlationId");
+        if (correlationId == null) {
+            correlationId = UUID.randomUUID().toString();
+        }
+        var event = new OrderCreatedEvent(
+                UUID.randomUUID(), order.getId(), customerId, amount, currency, Instant.now(), correlationId);
         outboxRepository.save(new OutboxMessage(event.eventId(), Topics.ORDER_CREATED, order.getId().toString(),
                 event.getClass().getSimpleName(), write(event)));
         return order;
-    }
-
-    @Cacheable(cacheNames = "orders", key = "#id")
-    public OrderEntity get(UUID id) {
-        return orderRepository.findById(id).orElseThrow();
     }
 
     private String write(Object payload) {

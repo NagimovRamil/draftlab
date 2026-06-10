@@ -11,6 +11,7 @@ public record NotificationRequestedEvent(
         String customerId,
         String channel,
         String message,
-        Instant occurredAt
+        Instant occurredAt,
+        String correlationId
 ) {
 }

@@ -12,6 +12,7 @@ public record OrderCreatedEvent(
         String customerId,
         BigDecimal amount,
         String currency,
-        Instant occurredAt
+        Instant occurredAt,
+        String correlationId
 ) {
 }

@@ -11,6 +11,18 @@ ext {
     springdocVersion = '2.8.9'
 }
 
+configure(subprojects.findAll { it.name != 'common-events' }) {
+    pluginManager.withPlugin('java') {
+        dependencies {
+            implementation 'org.springframework.boot:spring-boot-starter-actuator'
+            implementation 'io.micrometer:micrometer-tracing-bridge-otel'
+            implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
+            runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+            testImplementation 'org.springframework.boot:spring-boot-starter-test'
+        }
+    }
+}
+
 subprojects {
     group = 'com.draftlab'
     version = '0.0.1-SNAPSHOT'
@@ -25,6 +37,10 @@ subprojects {
         tasks.withType(JavaCompile).configureEach {
             options.release = rootProject.ext.javaVersion
             options.encoding = 'UTF-8'
+        }
+
+        tasks.withType(Test).configureEach {
+            useJUnitPlatform()
         }
     }
 }

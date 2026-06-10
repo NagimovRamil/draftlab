@@ -9,6 +9,7 @@ public record PaymentFailedEvent(
         UUID eventId,
         UUID orderId,
         String reason,
-        Instant occurredAt
+        Instant occurredAt,
+        String correlationId
 ) {
 }

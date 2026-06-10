@@ -11,6 +11,7 @@ import jakarta.transaction.Transactional;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.MDC;
 import org.springframework.cache.CacheManager;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
@@ -26,27 +27,31 @@ public class PaymentEventsListener {
     @KafkaListener(topics = Topics.PAYMENT_AUTHORIZED, groupId = "order-service")
     @Transactional
     public void onAuthorized(PaymentAuthorizedEvent event) {
-        if (processedMessages.existsById(event.eventId())) {
-            return;
+        try (var ignored = MDC.putCloseable("correlationId", event.correlationId())) {
+            if (processedMessages.existsById(event.eventId())) {
+                return;
+            }
+            var order = orderRepository.findById(event.orderId()).orElseThrow();
+            order.setStatus(OrderStatus.PAYMENT_AUTHORIZED);
+            order.setUpdatedAt(Instant.now());
+            processedMessages.save(new ProcessedMessage(event.eventId(), CONSUMER));
+            evictOrder(event.orderId());
         }
-        var order = orderRepository.findById(event.orderId()).orElseThrow();
-        order.setStatus(OrderStatus.PAYMENT_AUTHORIZED);
-        order.setUpdatedAt(Instant.now());
-        processedMessages.save(new ProcessedMessage(event.eventId(), CONSUMER));
-        evictOrder(event.orderId());
     }
 
     @KafkaListener(topics = Topics.PAYMENT_FAILED, groupId = "order-service")
     @Transactional
     public void onFailed(PaymentFailedEvent event) {
-        if (processedMessages.existsById(event.eventId())) {
-            return;
+        try (var ignored = MDC.putCloseable("correlationId", event.correlationId())) {
+            if (processedMessages.existsById(event.eventId())) {
+                return;
+            }
+            var order = orderRepository.findById(event.orderId()).orElseThrow();
+            order.setStatus(OrderStatus.PAYMENT_FAILED);
+            order.setUpdatedAt(Instant.now());
+            processedMessages.save(new ProcessedMessage(event.eventId(), CONSUMER));
+            evictOrder(event.orderId());
         }
-        var order = orderRepository.findById(event.orderId()).orElseThrow();
-        order.setStatus(OrderStatus.PAYMENT_FAILED);
-        order.setUpdatedAt(Instant.now());
-        processedMessages.save(new ProcessedMessage(event.eventId(), CONSUMER));
-        evictOrder(event.orderId());
     }
 
     private void evictOrder(UUID orderId) {
