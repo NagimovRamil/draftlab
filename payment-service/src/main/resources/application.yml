@@ -32,6 +32,10 @@ spring:
     consumer:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    listener:
+      observation-enabled: true
+    template:
+      observation-enabled: true
   cache:
     cache-names: payments-by-order
     caffeine:
@@ -59,6 +63,34 @@ resilience4j:
       ledger:
         max-concurrent-calls: 10
         max-wait-duration: 100ms
+  timelimiter:
+    instances:
+      ledger:
+        timeout-duration: 1200ms
+        cancel-running-future: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,circuitbreakers,retries,bulkheads
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  health:
+    circuitbreakers:
+      enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318/v1/traces}
+
+logging:
+  pattern:
+    correlation: "[%X{correlationId:-},%X{traceId:-},%X{spanId:-}] "
 
 springdoc:
   swagger-ui:

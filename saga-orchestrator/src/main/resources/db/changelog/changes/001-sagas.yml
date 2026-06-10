@@ -1,0 +1,35 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-sagas
+      author: draftlab
+      changes:
+        - createTable:
+            tableName: order_sagas
+            columns:
+              - column: { name: id, type: uuid, constraints: { primaryKey: true } }
+              - column: { name: order_id, type: uuid, constraints: { nullable: false } }
+              - column: { name: customer_id, type: varchar(128), constraints: { nullable: false } }
+              - column: { name: status, type: varchar(64), constraints: { nullable: false } }
+              - column: { name: failure_reason, type: varchar(512) }
+              - column: { name: created_at, type: timestamp with time zone, constraints: { nullable: false } }
+              - column: { name: updated_at, type: timestamp with time zone, constraints: { nullable: false } }
+        - addUniqueConstraint:
+            tableName: order_sagas
+            columnNames: order_id
+            constraintName: uq_order_sagas_order_id
+        - createTable:
+            tableName: outbox_messages
+            columns:
+              - column: { name: id, type: uuid, constraints: { primaryKey: true } }
+              - column: { name: topic, type: varchar(128), constraints: { nullable: false } }
+              - column: { name: aggregate_id, type: varchar(128), constraints: { nullable: false } }
+              - column: { name: type, type: varchar(128), constraints: { nullable: false } }
+              - column: { name: payload, type: text, constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamp with time zone, constraints: { nullable: false } }
+              - column: { name: published_at, type: timestamp with time zone }
+        - createTable:
+            tableName: processed_messages
+            columns:
+              - column: { name: event_id, type: uuid, constraints: { primaryKey: true } }
+              - column: { name: consumer_name, type: varchar(128), constraints: { nullable: false } }
+              - column: { name: processed_at, type: timestamp with time zone, constraints: { nullable: false } }

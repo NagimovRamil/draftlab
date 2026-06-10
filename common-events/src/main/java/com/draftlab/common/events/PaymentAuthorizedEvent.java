@@ -12,6 +12,7 @@ public record PaymentAuthorizedEvent(
         UUID paymentId,
         BigDecimal amount,
         String currency,
-        Instant occurredAt
+        Instant occurredAt,
+        String correlationId
 ) {
 }

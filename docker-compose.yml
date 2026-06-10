@@ -11,6 +11,35 @@ services:
     volumes:
       - ./docker/postgres/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql:ro
       - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U draftlab -d draftlab"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  database-migrations:
+    image: postgres:17
+    container_name: draftlab-database-migrations
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: draftlab
+    volumes:
+      - ./docker/postgres/init-databases.sql:/migrations/init-databases.sql:ro
+    command:
+      - psql
+      - -h
+      - postgres
+      - -U
+      - draftlab
+      - -d
+      - draftlab
+      - -v
+      - ON_ERROR_STOP=1
+      - -f
+      - /migrations/init-databases.sql
+    restart: "no"
 
   kafka:
     image: apache/kafka:4.0.0
@@ -29,6 +58,16 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.68.0
+    container_name: draftlab-jaeger
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
 
 volumes:
   postgres-data:

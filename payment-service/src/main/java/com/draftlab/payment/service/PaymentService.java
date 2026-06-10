@@ -1,7 +1,6 @@
 package com.draftlab.payment.service;
 
-import com.draftlab.common.events.NotificationRequestedEvent;
-import com.draftlab.common.events.OrderCreatedEvent;
+import com.draftlab.common.events.AuthorizePaymentCommand;
 import com.draftlab.common.events.PaymentAuthorizedEvent;
 import com.draftlab.common.events.PaymentFailedEvent;
 import com.draftlab.common.events.Topics;
@@ -26,23 +25,22 @@ public class PaymentService {
     private final ObjectMapper objectMapper;
 
     @Transactional
-    public void authorize(OrderCreatedEvent event) {
+    public void authorize(AuthorizePaymentCommand event) {
         if (paymentRepository.findByOrderId(event.orderId()).isPresent()) {
             return;
         }
         try {
-            ledgerGateway.reserve(new LedgerClient.LedgerReservationRequest(event.orderId(), event.amount(), event.currency()));
+            ledgerGateway.reserve(new LedgerClient.LedgerReservationRequest(
+                    event.orderId(), event.amount(), event.currency())).join();
             var payment = paymentRepository.save(PaymentEntity.authorized(event.orderId(), event.amount(), event.currency()));
             addOutbox(Topics.PAYMENT_AUTHORIZED, event.orderId(),
                     new PaymentAuthorizedEvent(UUID.randomUUID(), event.orderId(), payment.getId(),
-                            event.amount(), event.currency(), Instant.now()));
-            addOutbox(Topics.NOTIFICATION_REQUESTED, event.orderId(),
-                    new NotificationRequestedEvent(UUID.randomUUID(), event.orderId(), event.customerId(), "EMAIL",
-                            "Payment authorized for order " + event.orderId(), Instant.now()));
+                            event.amount(), event.currency(), Instant.now(), event.correlationId()));
         } catch (RuntimeException ex) {
             paymentRepository.save(PaymentEntity.failed(event.orderId(), event.amount(), event.currency(), "Ledger is unavailable"));
             addOutbox(Topics.PAYMENT_FAILED, event.orderId(),
-                    new PaymentFailedEvent(UUID.randomUUID(), event.orderId(), "Ledger is unavailable", Instant.now()));
+                    new PaymentFailedEvent(UUID.randomUUID(), event.orderId(), "Ledger is unavailable",
+                            Instant.now(), event.correlationId()));
         }
     }
 
